@@ -83,16 +83,28 @@ def main():
     # Inicializar session_state si no existe
     if "documents" not in st.session_state:
         st.session_state.documents = {}
+    
+    # Inicializar lista de URLs si no existe
+    if "urls" not in st.session_state:
+        st.session_state.urls = [""]
 
-    # Campo para cargar desde URL
-    url = st.text_input("Introduce una URL de un archivo PDF o DOCX")
+    # Mostrar los campos de entrada para las URLs
+    for i in range(len(st.session_state.urls)):
+        url_input = st.text_input(f"Introduce la URL #{i + 1}", value=st.session_state.urls[i], key=f"url_{i}")
+        st.session_state.urls[i] = url_input
 
-    # Botón para descargar desde la URL
-    if st.button("Descargar desde URL"):
-        if url:
-            file_id, file_path, content = save_file_from_url(url)
-            if file_id:
-                st.session_state.documents[file_id] = {"name": f"Archivo desde URL", "content": content}
+    # Botón para agregar un nuevo campo de URL
+    if st.button("Agregar más URL"):
+        st.session_state.urls.append("")
+
+    # Botón para descargar desde las URLs
+    if st.button("Descargar desde URLs"):
+        for url in st.session_state.urls:
+            if url:
+                file_id, file_path, content = save_file_from_url(url)
+                if file_id:
+                    st.session_state.documents[file_id] = {"name": f"Archivo desde URL", "content": content}
+
     
     # Subida de archivos con botón de submit
     uploaded_files = st.file_uploader(
