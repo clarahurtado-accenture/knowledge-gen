@@ -5,6 +5,7 @@ import requests
 from streamlit_quill import st_quill
 import PyPDF2
 from docx import Document
+from firecrawl import FirecrawlApp
 
 # Crear carpetas temporales
 for folder in ["temp", "temp_edited"]:
@@ -13,6 +14,8 @@ for folder in ["temp", "temp_edited"]:
             os.remove(os.path.join(folder, file))
     else:
         os.makedirs(folder)
+# Initialize the Firecrawl client
+app = FirecrawlApp(api_key="fc-YOUR_API_KEY")  # Replace with your actual API key
 
 def save_uploaded_file(uploaded_file):
     """Guarda el archivo subido y devuelve su contenido."""
@@ -35,30 +38,52 @@ def save_uploaded_file(uploaded_file):
     
     return file_id, file_path, content
 
-def save_file_from_url(url):
-    """Descarga el archivo desde una URL y devuelve su contenido."""
-    response = requests.get(url)
-    if response.status_code == 200:
-        file_extension = url.split('.')[-1].lower()
-        file_id = str(uuid.uuid4())
-        file_path = f"temp/{file_id}_from_url.{file_extension}"
+# Function to crawl a website and handle pagination
+def save_file_from_url(url, limit=100, poll_interval=30):
 
-        with open(file_path, "wb") as f:
-            f.write(response.content)
-        
-        # Leer el contenido del archivo
-        content = ""
-        if file_extension == "pdf":
-            content = extract_pdf_text(file_path)
-        elif file_extension == "docx":
-            content = extract_docx_text(file_path)
-        else:
-            content = response.text  # Para archivos de texto
-
-        return file_id, file_path, content
-    else:
-        st.error(f"No se pudo descargar el archivo desde la URL. Código de error: {response.status_code}")
-        return None, None, None
+    # Start the crawl job
+    crawl_status = app.crawl_url(
+        url,
+        params={
+            'limit': limit,
+            'scrapeOptions': {'formats': ['markdown', 'html']}
+        },
+        poll_interval=poll_interval
+    )
+    
+    # Check the crawl status and retrieve results
+    crawl_id = crawl_status['id']
+    all_data = []
+    while True:
+        status_response = app.check_crawl_status(crawl_id)
+        if status_response['status'] == True:
+            # Append the current data to the results
+            if 'data' in status_response:
+                all_data.extend(status_response['data'])
+    
+            # Check if there is more data to fetch
+            if 'next' in status_response:
+                crawl_id = status_response['next'].split('/')[-1]  # Extract the new crawl ID from the next URL
+            else:
+                break
+    
+    file_extension = url.split('.')[-1].lower()
+    file_id = str(uuid.uuid4())
+    file_path = f"temp/{file_id}_from_url.{file_extension}"
+    
+    with open(file_path, "wb") as file:
+        for page in all_data:
+            file.write(f"Page URL: {page['metadata']['sourceURL']}\n")
+            file.write(f"Title: {page['metadata']['title']}\n")
+            file.write(f"Description: {page['metadata']['description']}\n")
+            file.write(f"Markdown Content:\n{page.get('markdown', 'N/A')}\n")
+            file.write(f"HTML Content:\n{page.get('html', 'N/A')}\n")
+            file.write("---\n")
+    
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    return file_id, file_path, content
 
 def extract_pdf_text(file_path):
     """Extrae el texto de un archivo PDF."""
@@ -103,7 +128,7 @@ def main():
             if url:
                 file_id, file_path, content = save_file_from_url(url)
                 if file_id:
-                    st.session_state.documents[file_id] = {"name": f"Archivo desde URL", "content": content}
+                    st.session_state.documents[file_id] = {"name": f"Archivo desde {url}", "content": content}
 
 
     
