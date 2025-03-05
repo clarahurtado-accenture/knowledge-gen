@@ -1,5 +1,4 @@
 streamlit
-pathlib
-os
-uuid
-streamlit_quill
+streamlit-quill
+python-docx
+PyPDF2
