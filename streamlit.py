@@ -15,8 +15,9 @@ for folder in ["temp", "temp_edited"]:
     else:
         os.makedirs(folder)
 # Initialize the Firecrawl client
-app = FirecrawlApp(api_key="fc-YOUR_API_KEY")  # Replace with your actual API key
+app = FirecrawlApp(api_key="fc-196bc1fa8dd949dd89d4c8a717506816")
 
+#function to save edited files
 def save_uploaded_file(uploaded_file):
     """Guarda el archivo subido y devuelve su contenido."""
     file_id = str(uuid.uuid4())
