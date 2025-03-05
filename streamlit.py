@@ -52,18 +52,17 @@ def save_file_from_url(url, limit=100, poll_interval=30):
     )
     
     # Check the crawl status and retrieve results
-    crawl_id = crawl_status['id']
+    url = url
     all_data = []
     while True:
-        status_response = app.check_crawl_status(crawl_id)
-        if status_response['status'] == True:
+        if crawl_status['status'] == True:
             # Append the current data to the results
-            if 'data' in status_response:
-                all_data.extend(status_response['data'])
+            if 'data' in crawl_status:
+                all_data.extend(crawl_status['data'])
     
             # Check if there is more data to fetch
-            if 'next' in status_response:
-                crawl_id = status_response['next'].split('/')[-1]  # Extract the new crawl ID from the next URL
+            if 'next' in crawl_status.keys():
+                url = crawl_status['next'].split('/')[-1]  # Extract the new crawl ID from the next URL
             else:
                 break
     
