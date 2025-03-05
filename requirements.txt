@@ -2,3 +2,4 @@ streamlit
 streamlit-quill
 python-docx
 PyPDF2
+requests
