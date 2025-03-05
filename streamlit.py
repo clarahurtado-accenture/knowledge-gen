@@ -92,18 +92,19 @@ def main():
     for i in range(len(st.session_state.urls)):
         url_input = st.text_input(f"Introduce la URL #{i + 1}", value=st.session_state.urls[i], key=f"url_{i}")
         st.session_state.urls[i] = url_input
+        
+        # Botón para agregar un nuevo campo de URL
+        if st.button("Agregar más URL"):
+            st.session_state.urls.append("")
 
-    # Botón para agregar un nuevo campo de URL
-    if st.button("Agregar más URL"):
-        st.session_state.urls.append("")
-
-    # Botón para descargar desde las URLs
+        # Botón para descargar desde las URLs
     if st.button("Descargar desde URLs"):
         for url in st.session_state.urls:
             if url:
                 file_id, file_path, content = save_file_from_url(url)
                 if file_id:
                     st.session_state.documents[file_id] = {"name": f"Archivo desde URL", "content": content}
+
 
     
     # Subida de archivos con botón de submit
