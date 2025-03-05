@@ -1,4 +1,4 @@
-pathlib
+pathlib>=1.0.1
 os
 uuid
-streamlit_quill
+streamlit-quill>=0.1.7
