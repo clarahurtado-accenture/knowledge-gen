@@ -50,39 +50,43 @@ def save_file_from_url(url, limit=100, poll_interval=30):
         },
         poll_interval=poll_interval
     )
+
+    print("done 1")
     
     # Check the crawl status and retrieve results
     url = url
     all_data = []
     while True:
-        if crawl_status['status'] == True:
+        if crawl_status["success"]==True:
             # Append the current data to the results
             if 'data' in crawl_status:
                 all_data.extend(crawl_status['data'])
+                print(all_data)
     
             # Check if there is more data to fetch
             if 'next' in crawl_status.keys():
                 url = crawl_status['next'].split('/')[-1]  # Extract the new crawl ID from the next URL
             else:
                 break
+        else:
+            print("no data")
+            break
     
     file_extension = url.split('.')[-1].lower()
     file_id = str(uuid.uuid4())
     file_path = f"temp/{file_id}_from_url.{file_extension}"
     
-    with open(file_path, "wb") as file:
+    with open(file_path, "w") as file:
         for page in all_data:
-            file.write(f"Page URL: {page['metadata']['sourceURL']}\n")
-            file.write(f"Title: {page['metadata']['title']}\n")
-            file.write(f"Description: {page['metadata']['description']}\n")
-            file.write(f"Markdown Content:\n{page.get('markdown', 'N/A')}\n")
-            file.write(f"HTML Content:\n{page.get('html', 'N/A')}\n")
+            file.write(f"{page['metadata']['title']}\n")
+            file.write(f"{page.get('markdown', 'N/A')}\n")
             file.write("---\n")
     
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     
     return file_id, file_path, content
+    
 
 def extract_pdf_text(file_path):
     """Extrae el texto de un archivo PDF."""
