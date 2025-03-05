@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import uuid
+import requests
 from streamlit_quill import st_quill
 import PyPDF2
 from docx import Document
@@ -34,6 +35,31 @@ def save_uploaded_file(uploaded_file):
     
     return file_id, file_path, content
 
+def save_file_from_url(url):
+    """Descarga el archivo desde una URL y devuelve su contenido."""
+    response = requests.get(url)
+    if response.status_code == 200:
+        file_extension = url.split('.')[-1].lower()
+        file_id = str(uuid.uuid4())
+        file_path = f"temp/{file_id}_from_url.{file_extension}"
+
+        with open(file_path, "wb") as f:
+            f.write(response.content)
+        
+        # Leer el contenido del archivo
+        content = ""
+        if file_extension == "pdf":
+            content = extract_pdf_text(file_path)
+        elif file_extension == "docx":
+            content = extract_docx_text(file_path)
+        else:
+            content = response.text  # Para archivos de texto
+
+        return file_id, file_path, content
+    else:
+        st.error(f"No se pudo descargar el archivo desde la URL. Código de error: {response.status_code}")
+        return None, None, None
+
 def extract_pdf_text(file_path):
     """Extrae el texto de un archivo PDF."""
     with open(file_path, "rb") as f:
@@ -57,6 +83,16 @@ def main():
     # Inicializar session_state si no existe
     if "documents" not in st.session_state:
         st.session_state.documents = {}
+
+    # Campo para cargar desde URL
+    url = st.text_input("Introduce una URL de un archivo PDF o DOCX")
+
+    # Botón para descargar desde la URL
+    if st.button("Descargar desde URL"):
+        if url:
+            file_id, file_path, content = save_file_from_url(url)
+            if file_id:
+                st.session_state.documents[file_id] = {"name": f"Archivo desde URL", "content": content}
     
     # Subida de archivos con botón de submit
     uploaded_files = st.file_uploader(
