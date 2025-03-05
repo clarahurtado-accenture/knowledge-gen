@@ -1,4 +1,4 @@
 streamlit
 streamlit-quill
-docx
+python-docx
 PyPDF2
